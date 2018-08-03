@@ -3,6 +3,7 @@ package com.reeman.wifi.wifimodule.dailog;
 import android.app.Dialog;
 import android.content.Context;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
@@ -81,20 +82,32 @@ public class WifiConnectDialog {
     public static final int LINE_WIFI_SUCCESS = LINE_WIFI_ERROR + 1;
     public static final int WIFI_CANCEL_SAVE = LINE_WIFI_SUCCESS + 1;
 
-
     private void initData() {
         BtnConn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (hasConnected){
-                    WifiUtils.getInstance(context).connectWifiByNetworkId(WifiUtils.getInstance(context).isConfiguration(scanResult.SSID));
+                    boolean isCon = WifiUtils.getInstance(context).connectSavedWifi(WifiUtils.getInstance(context).isConfigured(scanResult.SSID).networkId);
+                    Log.i("ggg","连接接结果：" + isCon);
+                    if (isCon){
+                        mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_SUCCESS);
+                    }else {
+                        mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_ERROR);
+                    }
+                    Log.i("ggg","连接接结果：");
                 }else {
                     String password = getPassword();
                     if (TextUtils.isEmpty(password) || password.length() < 8) {
                         Toast.makeText(context, "请输入大于8位数的密码",Toast.LENGTH_LONG).show();
                         return;
                     }
-                    //保存用户信息到系统
-                    WifiUtils.getInstance(context).addWifiConfig(scanResult.SSID,getPassword());
+
+                    boolean isCon = WifiUtils.getInstance(context).connectUnSaveWifi(scanResult,getPassword());
+                    Log.i("ggg","连接接结果：" + isCon);
+                    if (isCon){
+                        mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_SUCCESS);
+                    }else {
+                        mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_ERROR);
+                    }
                 }
                 dissmiss();
             }
@@ -140,8 +153,8 @@ public class WifiConnectDialog {
             hasConnected= false;
             //隐藏密码
             edtPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
-            int cfg = WifiUtils.getInstance(context).isConfiguration(scanResult.SSID);
-            if (cfg != -1){
+            WifiConfiguration cfg = WifiUtils.getInstance(context).isConfigured(scanResult.SSID);
+            if (cfg != null){
                 edtPassword.setVisibility(View.GONE);
                 tv_password.setVisibility(View.GONE);
                 BtnCancelSave.setVisibility(View.VISIBLE);
@@ -156,7 +169,7 @@ public class WifiConnectDialog {
                 cb_show_psw.setChecked(false);
 
             }
-            Log.i("ggg","点击SSID：" + scanResult.SSID  + "  |cfg:" + cfg + "  |hasConnected:"+ hasConnected);
+            Log.i("ggg","点击SSID：" + scanResult.SSID  + "  |cfg:" + cfg.SSID + "  |hasConnected:"+ hasConnected);
         } catch (Exception e) {
             Log.i("ggg","报错：" + e.toString());
             e.printStackTrace();

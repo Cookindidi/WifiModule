@@ -3,6 +3,7 @@ package com.reeman.wifi.wifimodule.dailog;
 import android.app.Dialog;
 import android.content.Context;
 import android.net.wifi.ScanResult;
+import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -12,7 +13,8 @@ import android.widget.TextView;
 import com.reeman.wifi.wifimodule.R;
 import com.reeman.wifi.wifimodule.utils.WifiUtils;
 
-import java.util.logging.Handler;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -23,9 +25,11 @@ public class WifiConNoPswDialog {
 
     Context context;
     Dialog mDialog;
+    Handler mHandler;
 
-    public WifiConNoPswDialog(final Context context) {
+    public WifiConNoPswDialog(final Context context,Handler handler) {
         this.context = context;
+        mHandler = handler;
         mDialog = new Dialog(context, R.style.MyDialog);
         final View layout = View.inflate(context, R.layout.dialog_conn_no_password, null);
         mDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -43,10 +47,24 @@ public class WifiConNoPswDialog {
         BtnConn = (Button) layout.findViewById(R.id.btn_connect);
     }
 
+
+    private void checkConnected(final boolean isConnected){
+        Timer checkConnectedTimer = new Timer();
+        checkConnectedTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (!isConnected){
+                    mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_ERROR);
+                }
+            }
+        },1500);
+    }
+
     private void initData() {
         BtnConn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                WifiUtils.getInstance(context).connectSpecificAP(scanResult);
+                boolean isConnected = WifiUtils.getInstance(context).connectNoPassWordWifi(scanResult);
+                checkConnected(isConnected);
                 dissmiss();
             }
         });

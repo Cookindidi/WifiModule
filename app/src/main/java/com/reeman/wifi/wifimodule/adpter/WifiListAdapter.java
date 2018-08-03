@@ -30,7 +30,7 @@ public class WifiListAdapter extends BaseAdapter {
     private ConnectivityManager cm;
 
     public void setDatas(List<ScanResult> datas) {
-        this.datas = WifiUtils.getInstance(context).checkReSsid(datas);
+        this.datas = datas;
     }
 
     public WifiListAdapter(Context context, List<ScanResult> datas) {
@@ -85,28 +85,32 @@ public class WifiListAdapter extends BaseAdapter {
 
         String ssid = datas.get(position).SSID;
         if (descOri.toUpperCase().contains("WPA-PSK")) {
-            desc = "（可使用 WPA）";
+            desc = "（可使用 WPS）";
         }
         if (descOri.toUpperCase().contains("WPA2-PSK")) {
-            desc = "（可使用 WPA2）";
+            desc = "（可使用 WPS）";
         }
         if (descOri.toUpperCase().contains("WPA-PSK")
                 && descOri.toUpperCase().contains("WPA2-PSK")) {
-            desc = "（可使用 WPA/WPA2）";
+            desc = "（可使用 WPS）";
         }
 
         //显示是否已保存
-        if (WifiUtils.getInstance(context).isConfiguration(ssid) != -1){
+        if (WifiUtils.getInstance(context).isConfigured(ssid) != null){
             if (descOri.toUpperCase().contains("WPA")){
                 desc = "已保存，加密";
-            }else {
+            }else if (descOri.toUpperCase().contains("WEP")) {
+                desc = "已保存，加密";
+            } else {
                 desc = "已保存，无密码";
             }
         }else {
-            if (!desc.contains("WPA")){
-                desc = "无密码";
-            }else {
+            if (descOri.toUpperCase().contains("WEP")){
+                desc = "加密（通过WEP保护）";
+            }else if (descOri.toUpperCase().contains("WPA")) {
                 desc = "加密" + desc;
+            }else {
+                desc = "无密码";
             }
         }
 

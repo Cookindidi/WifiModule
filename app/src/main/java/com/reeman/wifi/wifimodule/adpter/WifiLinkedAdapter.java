@@ -92,7 +92,7 @@ public class WifiLinkedAdapter extends BaseAdapter {
         }
 
         //显示是否已保存
-        if (WifiUtils.getInstance(context).isConfiguration(ssid)!= -1){
+        if (WifiUtils.getInstance(context).isConfigured(ssid)!= null){
             desc = "已保存，加密";
         }else {
             Log.i("ggg", "未保存的desc:" +desc);

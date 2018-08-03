@@ -1,5 +1,6 @@
 package com.reeman.wifi.wifimodule;
 
+import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
@@ -73,7 +74,7 @@ public class ViewController implements View.OnClickListener{
                     if (scanResult != null){
                         WifiUtils.getInstance(mContext).delWifiConfig(scanResult.SSID);
                         Log.d("ggg", "密码认证错误,删除保存的错误密码 "+ scanResult.SSID);
-                        Toast.makeText(mContext,"密码认证错误,请重新输入密码！",Toast.LENGTH_LONG).show();
+                        Toast.makeText(mContext,"密码认证错误,请重新输入密码！",Toast.LENGTH_SHORT).show();
                         initWifiListData();
                     }
                     break;
@@ -84,11 +85,23 @@ public class ViewController implements View.OnClickListener{
                     initWifiListData();
                     break;
 
-
+                case WifiUtils.LINE_WIFI_ERROR:
+                    Toast.makeText(mContext,"WIFI连接异常，跳转至系统WIFI",Toast.LENGTH_LONG).show();
+                    if (scanResult != null){
+                        WifiUtils.getInstance(mContext).delWifiConfig(scanResult.SSID);
+                    }
+                    startSetting();
+                    break;
 
             }
         }
     };
+
+    /***进入设置界面*/
+    public void startSetting() {
+        Intent wifiSettingsIntent = new Intent("android.settings.WIFI_SETTINGS");
+        mContext.startActivity(wifiSettingsIntent);
+    }
 
     public ViewController(WifiActivity context) {
         mContext = context;
@@ -113,9 +126,9 @@ public class ViewController implements View.OnClickListener{
         wifiLinkedView.setAdapter(wifiLinkedAdapter);
 
         wifiConnectionDialog = new WifiConnectDialog(mContext,handler);
-        mWifiConNoPassDialog = new WifiConNoPswDialog(mContext);
+        mWifiConNoPassDialog = new WifiConNoPswDialog(mContext,handler);
         mWifiStateAlertDialog = new WifiHasLinkedDialog(mContext);
-        mWifiAddDialog = new WifiAddDialog(mContext);
+        mWifiAddDialog = new WifiAddDialog(mContext,handler);
 
         mBroadcastReceiver = new NetworkReceiver();
         mBroadcastReceiver.initRegister(mContext,handler);
@@ -128,6 +141,8 @@ public class ViewController implements View.OnClickListener{
         wifiLinkedList.clear();
 
         wifiList = WifiUtils.getInstance(mContext).getScanResults();
+        wifiList = WifiUtils.getInstance(mContext).sortScanResult(wifiList);
+
         wifiLinkedList = WifiUtils.getInstance(mContext).getConnectedWifiScanResult();
 
         wifiListAdapter.setDatas(wifiList);
@@ -170,6 +185,9 @@ public class ViewController implements View.OnClickListener{
                     if (descOri.toUpperCase().contains("WPA-PSK")
                             && descOri.toUpperCase().contains("WPA2-PSK")) {
                         desc = "WPA/WPA2";
+                    }
+                    if (descOri.toUpperCase().contains("WEP")) {
+                        desc = "（已通过WEP保护）";
                     }
                     if (desc.equals("")) {
                         connectSelf(scanResult);

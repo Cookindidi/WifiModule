@@ -2,6 +2,7 @@ package com.reeman.wifi.wifimodule.dailog;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,12 +19,14 @@ import com.reeman.wifi.wifimodule.utils.WifiUtils;
 
 
 public class WifiAddDialog {
+    Handler mHandler;
     Context context;
     Dialog mDialog;
     private Spinner sp_safe;
     String[] arrays = new String[]{"无", "WEP", "WEP/WPA2 PSK", "802.1x EAP", "WAPI PSK", "WAPI SERT"};
 
-    public WifiAddDialog(final Context context) {
+    public WifiAddDialog(final Context context,Handler handler) {
+        mHandler = handler;
         this.context = context;
         mDialog = new Dialog(context, R.style.MyDialog);
         final View layout = View.inflate(context, R.layout.dialog_add_wifi, null);
@@ -101,17 +104,12 @@ public class WifiAddDialog {
         BtnConn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (checkWifi()) {
-                    WifiUtils.WifiCipherType type = null;
-                    if (safe_desc.contains("WPA")) {
-                        type = WifiUtils.WifiCipherType.WIFICIPHER_WPA;
-                    } else if (safe_desc.contains("WEP")) {
-                        type = WifiUtils.WifiCipherType.WIFICIPHER_WEP;
-                    } else if (safe_desc.contains("WEP") && safe_desc.contains("WPA")) {
-                        type = WifiUtils.WifiCipherType.WIFICIPHER_WPA;
-                    } else {
-                        type = WifiUtils.WifiCipherType.WIFICIPHER_NOPASS;
+                    boolean isConnected = WifiUtils.getInstance(context).addNetwork(WifiUtils.getInstance(context).createWifiConfiguration(wifiName,password,safe_desc));
+                    if (isConnected){
+                        mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_SUCCESS);
+                    }else {
+                        mHandler.sendEmptyMessage(WifiUtils.LINE_WIFI_ERROR);
                     }
-                    WifiUtils.getInstance(context).connect(wifiName,password,type);
                     dissmiss();
                 }
             }
